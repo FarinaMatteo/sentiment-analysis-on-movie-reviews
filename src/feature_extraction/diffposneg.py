@@ -63,8 +63,8 @@ class DiffPosNegVectorizer:
         distances, prevalences = [], []
         for doc in X:
             diffposneg = diff_pos_neg_feature(doc)
-            distances.append(diffposneg[0]) # absolute numerical distance
-            prevalences.append(diffposneg[1]) # estimated prevalence of neg/pos sentences (replaces the sign!)
+            distances.append(diffposneg[0])     # absolute numerical distance
+            prevalences.append(diffposneg[1])   # estimated prevalence of neg/pos sentences (replaces the sign!)
         distances = np.expand_dims(np.array(distances), axis=-1)
         distances = self.min_max_scaler.fit_transform(distances)
         prevalences = np.expand_dims(np.array(prevalences), axis=-1)

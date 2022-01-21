@@ -14,8 +14,8 @@ def main(first_stage_vectorizer_name="count", second_stage_vectorizer_name="tfid
     else:
         neg_corpus = neg
         pos_corpus = pos
-    
     mr_corpus = neg_corpus + pos_corpus
+    
     # represent documents for the first stage classifier (NB) with the selected 
     # vectorization method
     first_stage_vectorizer = switch_vectorizer(first_stage_vectorizer_name)
