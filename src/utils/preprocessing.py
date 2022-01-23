@@ -1,6 +1,7 @@
 import nltk
 from nltk.sentiment.util import mark_negation
 import numpy as np
+import os
 
 
 def lol2str(doc):
@@ -23,6 +24,20 @@ def get_movie_reviews_dataset(mark_negs=True):
         neg = [[mark_negation(sent) for sent in doc] for doc in neg]
         pos = [[mark_negation(sent) for sent in doc] for doc in pos]
     return neg, pos
+
+def load_corpus_rotten_imdb(path):
+    subjective_sentences = "quote.tok.gt9.5000"
+    objective_sentences = "plot.tok.gt9.5000"
+
+    subj = []
+    with open(os.path.join(path, subjective_sentences), 'r') as f:
+        [subj.append(sent.strip()) for sent in f.readlines()]
+
+    obj = []
+    with open(os.path.join(path, objective_sentences), 'r') as f:
+        [obj.append(sent.strip()) for sent in f.readlines()]
+
+    return subj, obj
 
 def hconcat(X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
     """Applies horizontal concatenation to the X1 and X2 matrices, returning the concatenated matrix."""

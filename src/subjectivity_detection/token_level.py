@@ -15,24 +15,12 @@ from sklearn.model_selection import cross_validate, StratifiedKFold
 src_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(src_dir_path)
 repo_root = os.path.dirname(src_dir_path)
-from utils.preprocessing import mr2str, get_movie_reviews_dataset, hconcat, vconcat
+from utils.preprocessing import (
+    mr2str, get_movie_reviews_dataset, load_corpus_rotten_imdb, hconcat, vconcat
+)
 
 UNIVERSAL_TAGSET = ["VERB", "NOUN", "PRON", "ADJ", "ADV", "ADP", "CONJ", "DET", "NUM", "PRT", "X", "."]
 SUBJECTIVITY_THRESH = 0.25
-
-def load_corpus_rotten_imdb(path):
-    subjective_sentences = "quote.tok.gt9.5000"
-    objective_sentences = "plot.tok.gt9.5000"
-
-    subj = []
-    with open(os.path.join(path, subjective_sentences), 'r') as f:
-        [subj.append(sent.strip()) for sent in f.readlines()]
-
-    obj = []
-    with open(os.path.join(path, objective_sentences), 'r') as f:
-        [obj.append(sent.strip()) for sent in f.readlines()]
-
-    return subj, obj
 
 
 def part_of_speech_features(sentence: str, tokenizer: Callable, vocab: set) -> list:
@@ -281,10 +269,11 @@ if __name__ == "__main__":
     print(classification_report(y_true, y_pred))
 
     # finally, dump the best estimator on disk
-    outpath = os.path.join(repo_root, 'models', 'subjectivity_detector.joblib')
+    outpath = os.path.join(repo_root, 'models', 'tl_subjectivity_detector.joblib')
     print("Saving model at: ", outpath)
     dump(estimator, outpath)
     out_time = time.time()
     mins = (out_time-in_time)//60
     secs = (out_time-in_time)%60
     print("Finished in {}m:{}s".format(int(mins), int(secs)))
+    
