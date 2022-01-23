@@ -1,4 +1,3 @@
-from pydoc import doc
 import nltk
 from nltk.sentiment.util import mark_negation
 import numpy as np
@@ -26,9 +25,23 @@ def get_movie_reviews_dataset(mark_negs=True):
     return neg, pos
 
 def hconcat(X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
+    """Applies horizontal concatenation to the X1 and X2 matrices, returning the concatenated matrix."""
+    assert len(X1.shape) == len(X2.shape) == 2, "function 'hconcat' only works with matrices (np.array with 2 dimensions)."
+    assert X1.shape[0] == X2.shape[0], "In order to hconcat matrices, they must have the same number of rows."
     N = X1.shape[0]
     M = X1.shape[1] + X2.shape[1]
     X = np.ndarray(shape=(N,M))
     X[:, :X1.shape[1]] = X1
     X[:, X1.shape[1]:] = X2
+    return X
+
+def vconcat(X1: np.ndarray, X2: np.ndarray) -> np.ndarray:
+    """Applies vertical concatenation to the X1 and X2 matrices, returning the concatenated matrix."""
+    assert len(X1.shape) == len(X2.shape) == 2, "function 'vconcat' only works with matrices (np.array with 2 dimensions)."
+    assert X1.shape[1] == X2.shape[1], "In order to vconcat matrices, they must have the same number of columns."
+    N = X1.shape[0] + X2.shape[0] # sum of 
+    M = X1.shape[1]
+    X = np.ndarray(shape=(N,M))
+    X[:X1.shape[0], :] = X1
+    X[X1.shape[0]:, :] = X2
     return X
