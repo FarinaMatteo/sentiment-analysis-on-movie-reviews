@@ -1,0 +1,7 @@
+vec1,vec2,subjDet,2Stage F1,Multinomial F1,SVC F1,2Stage InfTime,Multinomial Inftime,SVC Inftime
+diffposneg,count,True,0.836,0.485,0.836,0m:19s,0m:15s,0m:5s
+diffposneg,count,False,0.834,0.538,0.834,0m:29s,0m:22s,0m:7s
+diffposneg,tfidf,True,0.876,0.484,0.876,0m:19s,0m:14s,0m:4s
+diffposneg,tfidf,False,0.857,0.515,0.857,0m:29s,0m:22s,0m:7s
+count,tfidf,True,0.841,0.838,0.876,0m:5s,0m:4s,0m:4s
+count,tfidf,False,0.813,0.814,0.857,0m:7s,0m:6s,0m:7s

@@ -16,7 +16,7 @@ second_stage_vectorizer_path = os.path.join(models_dir, "second_stage_vectorizer
 
 class TwoStageClassifier(BaseEstimator, ClassifierMixin):
     def __init__(self, first_stage_vectorizer_path=first_stage_vectorizer_path, second_stage_vectorizer_path=second_stage_vectorizer_path,
-                    neg_cls_min_confidence=0.6, pos_cls_min_confidence=0.6, dim_red=False):
+                    neg_cls_min_confidence=0.6, pos_cls_min_confidence=0.6):
         assert 0 < neg_cls_min_confidence < 1, "The min confidence for the Negative Class must be within (0,1)"
         assert 0 < pos_cls_min_confidence < 1, "The min confidence for the Positive Class must be wihtin (0,1)"
         self.first_stage_clf = MultinomialNB()
