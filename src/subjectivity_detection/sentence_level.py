@@ -11,6 +11,7 @@ src_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(src_dir_path)
 repo_root = os.path.dirname(src_dir_path)
 from utils.preprocessing import load_corpus_rotten_imdb, get_movie_reviews_dataset, mr2str
+from utils.misc import switch_vectorizer
 
 
 def build_argparser():
@@ -18,9 +19,9 @@ def build_argparser():
     parser = ArgumentParser()
     parser.add_argument("-r", "--representation", type=str,
                         default="count",
-                        help="The Document representation to train the subjectivity detector. Choose between: 'count' or 'tfidf'. Default 'count'.")
+                        help="The Document representation to train the subjectivity detector. Choose between 'count' and 'tfidf'. Default 'count'.")
     parser.add_argument("-clf", "--classifier", type=str, default="multinomial",
-                        help="The Naive Bayes classifier to train. Choose between 'multinomial' or 'bernoulli'. Default: 'multinomial'.")
+                        help="The Naive Bayes classifier to train. Choose between 'multinomial' and 'bernoulli'. Default: 'multinomial'.")
     return parser
 
 
@@ -37,16 +38,13 @@ def main(representation="count", classifier="multinomial"):
     dataset = subj + obj
 
     # load the MovieReviews Corpus in order to extract its vocabulary
-    neg, pos = get_movie_reviews_dataset(mark_negs=False)
+    neg, pos = get_movie_reviews_dataset()
     neg = mr2str(neg)
     pos = mr2str(pos)
     mr = neg + pos
 
     # instantiate vectorizer and classifier based on passed arguments
-    if representation == "count":
-        vectorizer = CountVectorizer()
-    else:
-        vectorizer = TfidfVectorizer()
+    vectorizer = switch_vectorizer(representation)
 
     if classifier == "multinomial":
         clf = MultinomialNB()
@@ -79,11 +77,17 @@ def main(representation="count", classifier="multinomial"):
 
     # finally, dump the best estimator on disk
     outpath = os.path.join(repo_root, 'models',
-                            f'{representation}_{classifier}_subj_det.joblib')
+                            f'{representation}_{classifier}_subj_det_model.joblib')
     if not os.path.exists(os.path.dirname(outpath)):
         os.makedirs(os.path.dirname(outpath))
     print("Saving model at: ", outpath)
     dump(estimator, outpath)
+
+    # additionally, dump the respective vectorizer on disk
+    outpath = os.path.join(repo_root, 'models',
+                            f'{representation}_{classifier}_subj_det_vectorizer.joblib')
+    print("Saving vectorizer at: ", outpath)
+    dump(vectorizer, outpath)
 
 if __name__ == "__main__":
     parser = build_argparser()
