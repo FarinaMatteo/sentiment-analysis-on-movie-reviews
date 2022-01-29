@@ -1,7 +1,13 @@
-vec1,vec2,subjDet,2Stage F1,Multinomial F1,SVC F1,2Stage InfTime,Multinomial Inftime,SVC Inftime
-diffposneg,count,True,0.836,0.485,0.836,0m:19s,0m:15s,0m:5s
-diffposneg,count,False,0.834,0.538,0.834,0m:29s,0m:22s,0m:7s
-diffposneg,tfidf,True,0.876,0.484,0.876,0m:19s,0m:14s,0m:4s
-diffposneg,tfidf,False,0.857,0.515,0.857,0m:29s,0m:22s,0m:7s
-count,tfidf,True,0.841,0.838,0.876,0m:5s,0m:4s,0m:4s
-count,tfidf,False,0.813,0.814,0.857,0m:7s,0m:6s,0m:7s
+vec1,vec2,subjDet,dimRed,2Stage F1,Multinomial F1,SVC F1,2Stage InfTime,Multinomial Inftime,SVC Inftime
+diffposneg,count,aggregate,True,0.52,0.489,0.905,0m:33s,0m:22s,0m:11s
+diffposneg,count,aggregate,False,0.731,0.52,0.731,2m:54s,0m:22s,2m:31s
+diffposneg,count,filter,True,0.535,0.488,0.89,0m:19s,0m:14s,0m:5s
+diffposneg,count,filter,False,0.748,0.512,0.748,2m:15s,0m:15s,1m:59s
+diffposneg,tfidf,aggregate,True,0.492,0.522,0.9,0m:33s,0m:22s,0m:11s
+diffposneg,tfidf,aggregate,False,0.832,0.516,0.832,3m:12s,0m:22s,2m:53s
+diffposneg,tfidf,filter,True,0.492,0.489,0.815,0m:20s,0m:15s,0m:5s
+diffposneg,tfidf,filter,False,0.851,0.549,0.857,2m:25s,0m:14s,2m:13s
+count,tfidf,aggregate,True,0.813,0.814,0.898,0m:7s,0m:7s,0m:11s
+count,tfidf,aggregate,False,0.812,0.814,0.832,0m:7s,0m:7s,3m:21s
+count,tfidf,filter,True,0.839,0.838,0.815,0m:4s,0m:5s,0m:5s
+count,tfidf,filter,False,0.839,0.838,0.857,0m:5s,0m:4s,2m:44s
