@@ -2,10 +2,10 @@ import os
 import sys
 import math
 import time
-from typing import Callable
 import nltk
 import numpy as np
 from joblib import dump
+from typing import Callable
 from nltk.tokenize import word_tokenize
 from sklearn.naive_bayes import MultinomialNB
 from nltk.sentiment.util import mark_negation
@@ -172,7 +172,7 @@ def token_count(ds, tokenizer, vocab):
 def embed_sentence(sent, tokenizer, vocabulary, tfidf_map):
     """Encodes a sentence extracting token-level features as proposed in https://arxiv.org/pdf/1312.6962.pdf.
     
-    The extracted features for each token (extracted with the :param tokenizer: callable )of :param sent: are:  
+    The extracted features for each token (extracted with the :param tokenizer: callable) of :param sent: are:  
     - the index representing the token position in :param vocab: (token identifier);
     - its tfidf feature (using :param tfidf_map:);
     - its positional feature;
@@ -182,26 +182,20 @@ def embed_sentence(sent, tokenizer, vocabulary, tfidf_map):
     Thus, a matrix of shape (N_tokens, 5) is returned.
     """
     tokens = tokenizer(sent)
-    vocab_feats = []
     tfidf_feats = []
     position_feats = position_features(sent, tokenizer, vocabulary)
     part_of_speech_feats = part_of_speech_features(sent, tokenizer, vocabulary)
     negation_feats = negation_feature(sent, tokenizer, vocabulary)
     for token in tokens:
         if token in vocabulary:
-            vocab_feats.append(list(vocabulary).index(token))
             tfidf_feats.append(tfidf_map.get(token))
 
-    vocab_feats = np.expand_dims(np.array(vocab_feats), axis=-1)
     tfidf_feats = np.expand_dims(np.array(tfidf_feats), axis=-1)
     position_feats = np.expand_dims(np.array(position_feats), axis=-1)
     part_of_speech_feats = np.expand_dims(np.array(part_of_speech_feats), axis=-1)
     negation_feats = np.expand_dims(np.array(negation_feats), axis=-1)
     
-    X = hconcat(vocab_feats, tfidf_feats)
-    X = hconcat(X, part_of_speech_feats)
-    X = hconcat(X, position_feats)
-    X = hconcat(X, negation_feats)
+    X = np.concatenate((tfidf_feats, part_of_speech_feats, position_feats, negation_feats), axis=1)
     return X
 
 
@@ -248,7 +242,6 @@ if __name__ == "__main__":
             X = embedded_sent_matrix
         else:
             X = vconcat(X, embedded_sent_matrix)
-    print(X.shape)
     labels = [1]*token_count(subj, word_tokenize, vocabulary) + [0]*token_count(obj, word_tokenize, vocabulary)
 
     # instantiate and cross-validate the MultinomialNB classifier on the token-level task
