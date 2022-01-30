@@ -42,9 +42,11 @@ def main(first_stage_vectorizer_name="count",
     subj_vectorizer = load(subj_vectorizer_path)
     subj_detector_path = os.path.join(models_dir, f"{subj_det_filename}_subj_det_model.joblib")
     subj_detector = load(subj_detector_path)
+    subj_filter_mins, subj_filter_secs = 0, 0
     if subj_det == "filter":
         # classify each sentence of each document in the MovieReviews dataset. Then, prune
         # the factual ones.
+        subj_filter_in_time = time.time()
         n_removed, total = 0, 0
         for i, doc in enumerate(deepcopy(mr)):
             sents = [" ".join(sent) for sent in doc]
@@ -54,6 +56,9 @@ def main(first_stage_vectorizer_name="count",
             n_removed += len(doc) - len(mr[i])
             total += len(doc)
         print(f"Removed {n_removed} sents out of {total} thanks to subjectivity detection.")
+        subj_filter_span_time = time.time() - subj_filter_in_time
+        subj_filter_mins = int(subj_filter_span_time//60)
+        subj_filter_secs = int(subj_filter_span_time%60)
     
     # represent documents for the first stage classifier (NB) with the selected 
     # vectorization method
@@ -103,6 +108,10 @@ def main(first_stage_vectorizer_name="count",
     # test the inference time for the Naive Bayes classifier
     best = scores["estimator"][np.argmax(np.array(scores["test_f1_micro"]))]
     multinomial_nb_exec_time = inference_time(mr, best, first_stage_vectorizer)
+    if subj_det == "filter":
+        multinomial_nb_mins = int(multinomial_nb_exec_time.split(":")[0][:-1]) + subj_filter_mins
+        multinomial_nb_secs = int(multinomial_nb_exec_time.split(":")[1][:-1]) + subj_filter_secs
+        multinomial_nb_exec_time = f"{multinomial_nb_mins}m:{multinomial_nb_secs}s"
 
     # test the SVC only
     if dim_red:
@@ -129,9 +138,9 @@ def main(first_stage_vectorizer_name="count",
     # test the inference time for the SVC
     best = scores["estimator"][np.argmax(np.array(scores["test_f1_micro"]))]
     svc_exec_time = inference_time(mr, best, second_stage_vectorizer,
-                                    best_two_stage.dim_reducer if dim_red else None,
-                                    best_two_stage.subj_detector if subj_det == "aggregate" else None,
-                                    best_two_stage.subj_vectorizer if subj_det == "aggregate" else None)
+                                    dim_reducer=best_two_stage.dim_reducer if dim_red else None,
+                                    subj_detector=best_two_stage.subj_detector if subj_det == "aggregate" else None,
+                                    subj_vectorizer=best_two_stage.subj_vectorizer if subj_det == "aggregate" else None)
 
     # print the total execution time on the terminal
     out_time = time.time()
@@ -158,10 +167,6 @@ if __name__ == "__main__":
     import pandas as pd
 
     # define possible options for the experiment parameters
-    # first_stage_vec_options = ["diffposneg", "count"]
-    # second_stage_vec_options = [["count", "tfidf"], ["tfidf"]]
-    # subj_det_options = ["filter", "aggregate"]
-    # dim_red_options = [True, False]
     first_stage_vec_options = ["diffposneg", "count"]
     second_stage_vec_options = [["count", "tfidf"], ["tfidf"]]
     subj_det_options = ["aggregate", "filter"]
@@ -183,7 +188,7 @@ if __name__ == "__main__":
                     summary.append(data)
 
     # finally, save the results of the experiments on disk
-    summary_path = os.path.join(repo_root, "csv-data", "summary.csv")
+    summary_path = os.path.join(repo_root, "csv-data", "test.csv")
     if not os.path.exists(os.path.dirname(summary_path)):
         os.makedirs(os.path.dirname(summary_path))
     print("Saving summary at: ", summary_path)
