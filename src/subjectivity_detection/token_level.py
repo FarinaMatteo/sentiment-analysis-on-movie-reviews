@@ -1,3 +1,6 @@
+from utils.preprocessing import (
+    mr2str, get_movie_reviews_dataset, load_corpus_rotten_imdb, hconcat, vconcat
+)
 import os
 import sys
 import math
@@ -15,11 +18,9 @@ from sklearn.model_selection import cross_validate, StratifiedKFold
 src_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(src_dir_path)
 repo_root = os.path.dirname(src_dir_path)
-from utils.preprocessing import (
-    mr2str, get_movie_reviews_dataset, load_corpus_rotten_imdb, hconcat, vconcat
-)
 
-UNIVERSAL_TAGSET = ["VERB", "NOUN", "PRON", "ADJ", "ADV", "ADP", "CONJ", "DET", "NUM", "PRT", "X", "."]
+UNIVERSAL_TAGSET = ["VERB", "NOUN", "PRON", "ADJ",
+                    "ADV", "ADP", "CONJ", "DET", "NUM", "PRT", "X", "."]
 SUBJECTIVITY_THRESH = 0.25
 
 
@@ -38,7 +39,7 @@ def part_of_speech_features(sentence: str, tokenizer: Callable, vocab: set) -> l
 
 def position_features(sentence: str, tokenizer: Callable, vocab: set) -> list:
     """Encodes the relative position of the tokens in :param sentence: as follows:
-    
+
     - 0 for tokens at the beginning of the sentence; 
     - 1 for tokens in the middle of the sentence;
     - 2 for tokens at the end of the sentence.
@@ -60,10 +61,10 @@ def position_features(sentence: str, tokenizer: Callable, vocab: set) -> list:
     return out
 
 
-def fl(corpus: list[str], return_vocab: bool=False) -> dict:
+def fl(corpus: list[str], return_vocab: bool = False) -> dict:
     """Builds the frequency list of a corpus. Returns a dictionary
     where words are the keys and their frequency in the corpus is the respective value.
-    
+
     If :param return_vocab: is True, the vocabulary of the corpus is returned alongside
     the frequency list."""
     out = {}
@@ -147,7 +148,7 @@ def filter_dict(fl, vocab):
 def negation_feature(sent: str, tokenizer: Callable, vocab: set) -> list:
     """Encodes :param sent: extracting the Negation Feature. The Negation Feature is
     defined as a vector where a 1 indicates a token being part of a negated phrase and 0 viceversa.
-    
+
     Tokens are extracted with the :param tokenizer: callable and filtered out based on their appearance
     in :param vocab: before transforming the sentence."""
     tokens = tokenizer(sent)
@@ -171,14 +172,14 @@ def token_count(ds, tokenizer, vocab):
 
 def embed_sentence(sent, tokenizer, vocabulary, tfidf_map):
     """Encodes a sentence extracting token-level features as proposed in https://arxiv.org/pdf/1312.6962.pdf.
-    
+
     The extracted features for each token (extracted with the :param tokenizer: callable) of :param sent: are:  
     - the index representing the token position in :param vocab: (token identifier);
     - its tfidf feature (using :param tfidf_map:);
     - its positional feature;
     - its part_of_speech feature:
     - its negation feature.
-    
+
     Thus, a matrix of shape (N_tokens, 5) is returned.
     """
     tokens = tokenizer(sent)
@@ -192,10 +193,12 @@ def embed_sentence(sent, tokenizer, vocabulary, tfidf_map):
 
     tfidf_feats = np.expand_dims(np.array(tfidf_feats), axis=-1)
     position_feats = np.expand_dims(np.array(position_feats), axis=-1)
-    part_of_speech_feats = np.expand_dims(np.array(part_of_speech_feats), axis=-1)
+    part_of_speech_feats = np.expand_dims(
+        np.array(part_of_speech_feats), axis=-1)
     negation_feats = np.expand_dims(np.array(negation_feats), axis=-1)
-    
-    X = np.concatenate((tfidf_feats, part_of_speech_feats, position_feats, negation_feats), axis=1)
+
+    X = np.concatenate((tfidf_feats, part_of_speech_feats,
+                       position_feats, negation_feats), axis=1)
     return X
 
 
@@ -212,7 +215,7 @@ def classify_sentence(clf, sent, subjectivity_thresh, tokenizer, vocabulary, tfi
 
 if __name__ == "__main__":
     in_time = time.time()
-    
+
     # load the MovieReviews Corpus in order to extract its vocabulary
     neg, pos = get_movie_reviews_dataset(mark_negs=False)
     neg = mr2str(neg)
@@ -222,10 +225,11 @@ if __name__ == "__main__":
 
     # load the Rotten IMDB Dataset to train the subjectivity detector
     rotten_imdb_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
+        os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))),
         'data/rotten_imdb'
     )
-    subj, obj  = load_corpus_rotten_imdb(rotten_imdb_path)
+    subj, obj = load_corpus_rotten_imdb(rotten_imdb_path)
     dataset = subj + obj
 
     # define the statistical unigram values for the Rotten IMDB Dataset
@@ -237,12 +241,14 @@ if __name__ == "__main__":
     # build the X matrix embedding the whole Rotten IMDB Dataset
     X = None
     for sent in dataset:
-        embedded_sent_matrix = embed_sentence(sent, word_tokenize, vocabulary, tfidf_map)
+        embedded_sent_matrix = embed_sentence(
+            sent, word_tokenize, vocabulary, tfidf_map)
         if X is None:
             X = embedded_sent_matrix
         else:
             X = vconcat(X, embedded_sent_matrix)
-    labels = [1]*token_count(subj, word_tokenize, vocabulary) + [0]*token_count(obj, word_tokenize, vocabulary)
+    labels = [1]*token_count(subj, word_tokenize, vocabulary) + \
+        [0]*token_count(obj, word_tokenize, vocabulary)
 
     # instantiate and cross-validate the MultinomialNB classifier on the token-level task
     clf = MultinomialNB()
@@ -256,17 +262,19 @@ if __name__ == "__main__":
 
     # grab the best estimator from the cross validation procedure and evaluate it
     # on the sentence-level subjectivity detection task
-    estimator = scores['estimator'][np.argmax(np.array(scores['test_f1_micro']))]
+    estimator = scores['estimator'][np.argmax(
+        np.array(scores['test_f1_micro']))]
     y_true = [1]*len(subj) + [0]*len(obj)
-    y_pred = [classify_sentence(estimator, sent, SUBJECTIVITY_THRESH, word_tokenize, vocabulary, tfidf_map) for sent in dataset]
+    y_pred = [classify_sentence(estimator, sent, SUBJECTIVITY_THRESH,
+                                word_tokenize, vocabulary, tfidf_map) for sent in dataset]
     print(classification_report(y_true, y_pred))
 
     # finally, dump the best estimator on disk
-    outpath = os.path.join(repo_root, 'models', 'tl_subjectivity_detector.joblib')
+    outpath = os.path.join(repo_root, 'models',
+                           'tl_subjectivity_detector.joblib')
     print("Saving model at: ", outpath)
     dump(estimator, outpath)
     out_time = time.time()
     mins = (out_time-in_time)//60
-    secs = (out_time-in_time)%60
+    secs = (out_time-in_time) % 60
     print("Finished in {}m:{}s".format(int(mins), int(secs)))
-    

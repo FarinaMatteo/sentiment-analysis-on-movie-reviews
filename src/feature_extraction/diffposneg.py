@@ -1,3 +1,5 @@
+from utils.preprocessing import get_movie_reviews_dataset, hconcat
+from nltk.corpus import sentiwordnet as swn
 import os
 import sys
 import nltk
@@ -11,10 +13,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 nltk.download("sentiwordnet")
 nltk.download("universal_tagset")
 pos2wn = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
-from nltk.corpus import sentiwordnet as swn
 
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-from utils.preprocessing import get_movie_reviews_dataset, hconcat
+sys.path.append(os.path.join(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__)))))
+
 
 def lesk(context_sentence, ambiguous_word, pos=None, synsets=None):
     """Return a synset for an ambiguous word in a context.
@@ -46,12 +48,14 @@ def lesk(context_sentence, ambiguous_word, pos=None, synsets=None):
 
     return sense
 
+
 def valence_count(sent, tokenizer, memory, update_mem):
     """Given a string :param: sent, returns the count of both
     positive and negative tokens in it."""
     tokens = tokenizer(sent)
     tagged_tokens = nltk.pos_tag(tokens, tagset="universal")
-    tagged_tokens = [(t, pos2wn.get(pos_tag, None)) for (t, pos_tag) in tagged_tokens]
+    tagged_tokens = [(t, pos2wn.get(pos_tag, None))
+                     for (t, pos_tag) in tagged_tokens]
     sentence_counts = {"pos": 0, "neg": 0}
     for (t, pos_tag) in tagged_tokens:
         token_label = memory.get(t, None)
@@ -66,6 +70,7 @@ def valence_count(sent, tokenizer, memory, update_mem):
                 memory[t] = token_label
         sentence_counts[token_label] += 1
     return sentence_counts
+
 
 def swn_sentence_classification(sent, tokenizer, memory, update_mem):
     valence_counts = valence_count(sent, tokenizer, memory, update_mem)
@@ -86,7 +91,8 @@ class DiffPosNegVectorizer(BaseEstimator, TransformerMixin):
         with a positive orientation and sentences with a negative orientation."""
         pos_count, neg_count = 0, 0
         for sent in sent_tokenize(doc):
-            sent_cls = swn_sentence_classification(sent, self.tokenizer, memory, update_mem)
+            sent_cls = swn_sentence_classification(
+                sent, self.tokenizer, memory, update_mem)
             if sent_cls == 0:
                 neg_count += 1
             else:
@@ -105,8 +111,9 @@ class DiffPosNegVectorizer(BaseEstimator, TransformerMixin):
         with mp.Manager() as manager:
             mem = manager.dict()
             with mp.Pool(processes=mp.cpu_count()) as pool:
-                diff_pos_neg_feats = np.array(pool.starmap(self.diff_pos_neg_feature, [(doc, mem, True) for doc in X]))
-            self.memory_ = {k:v for k,v in mem.items()}
+                diff_pos_neg_feats = np.array(pool.starmap(
+                    self.diff_pos_neg_feature, [(doc, mem, True) for doc in X]))
+            self.memory_ = {k: v for k, v in mem.items()}
         distances = diff_pos_neg_feats[:, 0]
         self.min_ = np.amin(distances)
         self.max_ = np.amax(distances)
@@ -117,14 +124,16 @@ class DiffPosNegVectorizer(BaseEstimator, TransformerMixin):
         # apply parallel execution of the 'diff_pos_neg' feature extraction function
         with mp.Manager() as manager:
             mem = manager.dict()
-            mem = {k:v for k,v in self.memory_.items()}
+            mem = {k: v for k, v in self.memory_.items()}
             with mp.Pool(processes=mp.cpu_count()) as pool:
-                diff_pos_neg_feats = np.array(pool.starmap(self.diff_pos_neg_feature, [(doc, mem, False) for doc in X]))
+                diff_pos_neg_feats = np.array(pool.starmap(
+                    self.diff_pos_neg_feature, [(doc, mem, False) for doc in X]))
         distances = diff_pos_neg_feats[:, 0]
         prevalences = diff_pos_neg_feats[:, -1]
 
         # scale the values in the range [0,100], taking care of possible values outside the fitted min/max by clipping
-        distances = np.clip((distances - self.min_) / (self.max_ - self.min_ + np.finfo(float).eps), a_min=self.lb, a_max=self.ub)
+        distances = np.clip((distances - self.min_) / (self.max_ -
+                            self.min_ + np.finfo(float).eps), a_min=self.lb, a_max=self.ub)
         distances = np.int16(distances*100)
 
         # put components together and return
@@ -140,24 +149,28 @@ class DiffPosNegVectorizer(BaseEstimator, TransformerMixin):
         with mp.Manager() as manager:
             mem = manager.dict()
             with mp.Pool(processes=mp.cpu_count()) as pool:
-                diff_pos_neg_feats = np.array(pool.starmap(self.diff_pos_neg_feature, [(doc, mem, True) for doc in X]))
-            self.memory_ = {k:v for k,v in mem.items()}
+                diff_pos_neg_feats = np.array(pool.starmap(
+                    self.diff_pos_neg_feature, [(doc, mem, True) for doc in X]))
+            self.memory_ = {k: v for k, v in mem.items()}
         distances = diff_pos_neg_feats[:, 0]
         prevalences = diff_pos_neg_feats[:, -1]
-        print("Number of positive documents: {}".format(np.count_nonzero(prevalences)))
-        
+        print("Number of positive documents: {}".format(
+            np.count_nonzero(prevalences)))
+
         # override stats inferred from the data
         self.min_ = np.amin(distances)
         self.max_ = np.amax(distances)
 
         # scaling the values of the distances in the range [0, 1]
-        distances = (distances - self.min_) / (self.max_ - self.min_ + np.finfo(float).eps)
+        distances = (distances - self.min_) / \
+            (self.max_ - self.min_ + np.finfo(float).eps)
         distances = np.int16(distances*100)
 
         # put the feature components back together after post-processing and return
         distances = np.expand_dims(distances, axis=-1)
         prevalences = np.expand_dims(prevalences, axis=-1)
-        print(f"Fitted Model and transformed {len(X)} documents in {time.time()-in_time:.2f}s")
+        print(
+            f"Fitted Model and transformed {len(X)} documents in {time.time()-in_time:.2f}s")
         return hconcat(distances, prevalences)
 
 

@@ -7,21 +7,24 @@ import numpy as np
 from joblib import dump
 from scipy.sparse import csr_matrix
 from nltk.tokenize import word_tokenize
+from feature_extraction.diffposneg import DiffPosNegVectorizer
 
 from utils.preprocessing import hconcat, mr2str
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from feature_extraction.diffposneg import DiffPosNegVectorizer
+
 
 def get_basic_logger(logger_name="default"):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler()
     ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
     logger.addHandler(ch)
     return logger
+
 
 def switch_vectorizer(vectorizer_name="count"):
     assert vectorizer_name in ("count", "tfidf", "diffposneg", "bert")
@@ -32,6 +35,7 @@ def switch_vectorizer(vectorizer_name="count"):
     elif vectorizer_name == "diffposneg":
         return DiffPosNegVectorizer()
 
+
 def inference_time(X: list[list[str]], model, vectorizer=None, dim_reducer=None, subj_detector=None, subj_vectorizer=None):
     in_time = time.time()
     if subj_vectorizer and subj_detector:
@@ -40,7 +44,8 @@ def inference_time(X: list[list[str]], model, vectorizer=None, dim_reducer=None,
             sents = [" ".join(sent) for sent in doc]
             vectors = subj_vectorizer.transform(sents)
             y_pred = subj_detector.predict(vectors)
-            subj_features.append(1 if np.count_nonzero(np.array(y_pred)) >= len(y_pred) else 0)
+            subj_features.append(1 if np.count_nonzero(
+                np.array(y_pred)) >= len(y_pred) else 0)
         subj_features = np.array(subj_features)
     if vectorizer:
         X = vectorizer.transform(mr2str(X))
@@ -55,14 +60,12 @@ def inference_time(X: list[list[str]], model, vectorizer=None, dim_reducer=None,
     model.predict(X)
     span_time = time.time()-in_time
     return f"{int(span_time//60)}m:{int(span_time%60)}s"
-    
+
 
 def fit_transform_save(vectorizer, dataset, path):
     X = vectorizer.fit_transform(mr2str(dataset))
-    if isinstance(X, csr_matrix): # in case it is a scipy.csr.csr_matrix
+    if isinstance(X, csr_matrix):  # in case it is a scipy.csr.csr_matrix
         X = X.toarray()
-    # once the vectorizer for the 1st stage has been successfully fitted, dump it for further usage
-    # NOTE: useful for parallel cross validation!
     if not os.path.exists(os.path.dirname(path)):
         os.makedirs(os.path.dirname(path))
     dump(vectorizer, path)

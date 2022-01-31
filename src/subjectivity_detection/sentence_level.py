@@ -2,16 +2,15 @@ import os
 import sys
 import numpy as np
 from joblib import dump
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
+from utils.misc import switch_vectorizer
 from sklearn.metrics import classification_report
+from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.model_selection import cross_validate, StratifiedKFold
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from utils.preprocessing import load_corpus_rotten_imdb, get_movie_reviews_dataset, mr2str
 
 src_dir_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(src_dir_path)
 repo_root = os.path.dirname(src_dir_path)
-from utils.preprocessing import load_corpus_rotten_imdb, get_movie_reviews_dataset, mr2str
-from utils.misc import switch_vectorizer
 
 
 def build_argparser():
@@ -31,10 +30,11 @@ def main(representation="count", classifier="multinomial"):
 
     # load the Rotten IMDB Dataset to train the subjectivity detector
     rotten_imdb_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 
+        os.path.dirname(os.path.dirname(
+            os.path.dirname(os.path.abspath(__file__)))),
         'data/rotten_imdb'
     )
-    subj, obj  = load_corpus_rotten_imdb(rotten_imdb_path)
+    subj, obj = load_corpus_rotten_imdb(rotten_imdb_path)
     dataset = subj + obj
 
     # load the MovieReviews Corpus in order to extract its vocabulary
@@ -54,8 +54,8 @@ def main(representation="count", classifier="multinomial"):
     # fit the vectorizer on the MovieReviews dataset to link it to its vocab
     # MovieReviews will be the target dataset for the final evaluation!
     vectorizer.fit(mr)
-    
-    # then vectorize the RottenIMDB Dataset with the vocab constraints from MovieReviews 
+
+    # then vectorize the RottenIMDB Dataset with the vocab constraints from MovieReviews
     vectors = vectorizer.transform(dataset)
     labels = [1]*len(subj) + [0]*len(obj)
 
@@ -65,19 +65,20 @@ def main(representation="count", classifier="multinomial"):
                             scoring=['f1_micro'],
                             return_estimator=True,
                             n_jobs=-1)
-    estimator = scores["estimator"][np.argmax(np.array(scores["test_f1_micro"]))]
-    
+    estimator = scores["estimator"][np.argmax(
+        np.array(scores["test_f1_micro"]))]
+
     # display cross validation empirical results on the F1 metric
     average = sum(scores['test_f1_micro'])/len(scores['test_f1_micro'])
     print("Average F1 Score from cross validation: {:.2f}".format(average))
-    
+
     # test the best estimator on the whole RottenIMBD dataset and display the output
     y_pred = estimator.predict(vectors)
     print(classification_report(labels, y_pred))
 
     # finally, dump the best estimator on disk
     outpath = os.path.join(repo_root, 'models',
-                            f'{representation}_{classifier}_subj_det_model.joblib')
+                           f'{representation}_{classifier}_subj_det_model.joblib')
     if not os.path.exists(os.path.dirname(outpath)):
         os.makedirs(os.path.dirname(outpath))
     print("Saving model at: ", outpath)
@@ -85,9 +86,10 @@ def main(representation="count", classifier="multinomial"):
 
     # additionally, dump the respective vectorizer on disk
     outpath = os.path.join(repo_root, 'models',
-                            f'{representation}_{classifier}_subj_det_vectorizer.joblib')
+                           f'{representation}_{classifier}_subj_det_vectorizer.joblib')
     print("Saving vectorizer at: ", outpath)
     dump(vectorizer, outpath)
+
 
 if __name__ == "__main__":
     parser = build_argparser()
