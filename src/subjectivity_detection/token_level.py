@@ -1,5 +1,5 @@
 from utils.preprocessing import (
-    mr2str, get_movie_reviews_dataset, load_corpus_rotten_imdb, hconcat, vconcat
+    mr2str, get_movie_reviews_dataset, load_corpus_rotten_imdb, vconcat
 )
 import os
 import sys
@@ -26,8 +26,8 @@ SUBJECTIVITY_THRESH = 0.25
 
 def part_of_speech_features(sentence: str, tokenizer: Callable, vocab: set) -> list:
     """Encode the pos tags of the tokens in :param sentence: in a vectorial representation,
-    mapping the tags from the Universal Tagset. :param sentence: is split with the :param tokenizer:
-    callable, and resulting tokens not in :param vocab: are filtered out before applying the transformation."""
+    mapping the indices of the tags from the Universal Tagset. :param sentence: is split with the  :param tokenizer:
+    callable; resulting tokens not in :param vocab: are filtered out before applying the transformation."""
     tokens = tokenizer(sentence)
     tagged_tokens = nltk.pos_tag(tokens, tagset="universal")
     ret = []
@@ -61,7 +61,7 @@ def position_features(sentence: str, tokenizer: Callable, vocab: set) -> list:
     return out
 
 
-def fl(corpus: list[str], return_vocab: bool = False) -> dict:
+def fl(corpus: list[str], return_vocab: bool = False):
     """Builds the frequency list of a corpus. Returns a dictionary
     where words are the keys and their frequency in the corpus is the respective value.
 
@@ -108,7 +108,7 @@ def tfidf(token, fl, dfl, ndocs):
 
 def tfidf_dict(fl, dfl, ndocs, norm=True):
     """Builds a dict with the tfidf (Term-Frequency - Inverse-Document-Frequency) value for each
-    word (used as the key).  
+    word.  
 
     - :param fl: frequency list of the vocabulary;
     - :param dfl: document-based frequency list of the vocabulary;
@@ -171,16 +171,16 @@ def token_count(ds, tokenizer, vocab):
 
 
 def embed_sentence(sent, tokenizer, vocabulary, tfidf_map):
-    """Encodes a sentence extracting token-level features as proposed in https://arxiv.org/pdf/1312.6962.pdf.
+    """Encodes a sentence extracting  a subset of token-level features 
+    w.r.t. the ones proposed in https://arxiv.org/pdf/1312.6962.pdf.
 
-    The extracted features for each token (extracted with the :param tokenizer: callable) of :param sent: are:  
-    - the index representing the token position in :param vocab: (token identifier);
+    The features for each token (extracted with the :param tokenizer: callable) of :param sent: are:  
     - its tfidf feature (using :param tfidf_map:);
     - its positional feature;
     - its part_of_speech feature:
     - its negation feature.
 
-    Thus, a matrix of shape (N_tokens, 5) is returned.
+    Thus, a matrix of shape (N_tokens, 4) is returned.
     """
     tokens = tokenizer(sent)
     tfidf_feats = []

@@ -78,7 +78,16 @@ def swn_sentence_classification(sent, tokenizer, memory, update_mem):
 
 
 class DiffPosNegVectorizer(BaseEstimator, TransformerMixin):
+    """Class for implementing the DiffPosNeg feature as described in https://aclanthology.org/I13-1114/
+    through scikit-learn APIs."""
+    
     def __init__(self, tokenizer=word_tokenize, lb=0, ub=1):
+        """
+        - :param tokenizer: Callable parameter, used to extract tokens from documents
+        when vectorizing;
+        - :param lb: lower bound for clipping absolute values of numerical distances once scaled;
+        - :param rb: same as :param lb:, but upper bound.
+        """
         super(BaseEstimator, self).__init__()
         super(TransformerMixin, self).__init__()
         self.tokenizer = tokenizer

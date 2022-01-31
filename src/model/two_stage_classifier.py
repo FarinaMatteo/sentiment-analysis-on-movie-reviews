@@ -33,6 +33,15 @@ subj_vectorizer_path = os.path.join(
 
 
 class TwoStageClassifier(BaseEstimator, ClassifierMixin):
+    """
+    Implementation of the Two Stage Classifier proposed in https://aclanthology.org/I13-1114/
+    The first stage of the classifier is implemented as a scikit-learn estimator, while the
+    second stage is implemented extended the ClassifierMixin class.
+
+    The additional option of dimensionality reduction, not mentioned in the original
+    paper, is also integrated within this classifier through optional Linear Discriminant Analysis.
+    """
+
     def __init__(self, first_stage_vectorizer_path=first_stage_vectorizer_path,
                  second_stage_vectorizer_path=second_stage_vectorizer_path,
                  neg_cls_min_confidence=0.6,
@@ -41,6 +50,24 @@ class TwoStageClassifier(BaseEstimator, ClassifierMixin):
                  use_subjectivity=False,
                  subj_detector_path=subj_detector_path,
                  subj_vectorizer_path=subj_vectorizer_path):
+        """
+        - :param first_stage_vectorizer_path: dumped .joblib file, containing the fitted
+        sklearn vectorizer to be used for the Naive Bayes classification at the first stage;
+        - :param second_stage_vectorizer_path: analogous to :param first_stage_vectorizer_path:,
+        but for the second stage classification with Support Vectors;
+        - :param_neg_cls_min_confidence: minimum confidence required to the First Stage when classifying
+        documents predicted to be negative. In case the prediction unsatisfies this requirement, the 
+        Second Stage is invoked;
+        - :param pos_cls_min_confidence: analogous to :param_neg_cls_min_confidence:, but for the positive class;
+        - :param dim_red: if set to True, Linear Discriminant Analysis will be used to project input data along
+        a direction maximizing the class separability before classifying with the Second Stage;
+        - :param use_subjectivity: if set to True, extracts the subjectivity feature from documents and uses it as
+        an additional component to the feature vector of input documents; 
+        - :param subj_detector_path: dumped subjectivity detector to extract the subjectivity feature from input 
+        documents. Unused if use_subjectivity=False;
+        - :param subj_vectorizer_path: dumped joblib vectorizer to preprocess documents before extracting the subjectivity
+        feature. Unused if use_subjectivity=False.
+        """
 
         assert 0 < neg_cls_min_confidence < 1, \
             "The min confidence for the Negative Class must be within (0,1)"
