@@ -17,7 +17,7 @@ dim_reducer_path = os.path.join(models_dir, "dim_reducer.joblib")
 def main(first_stage_vectorizer_name="count",
          second_stage_vectorizer_name="tfidf",
          subj_det="filter",
-         subj_det_filename="count_bernoulli",
+         subj_det_filename="count_multinomial",
          dim_red=True,
          kfold_splits=5):
 
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                     summary.append(data)
 
     # finally, save the results of the experiments on disk
-    summary_path = os.path.join(repo_root, "csv-data", "test.csv")
+    summary_path = os.path.join(repo_root, "csv-data", "summary.csv")
     if not os.path.exists(os.path.dirname(summary_path)):
         os.makedirs(os.path.dirname(summary_path))
     print("Saving summary at: ", summary_path)
